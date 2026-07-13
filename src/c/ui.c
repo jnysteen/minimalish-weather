@@ -10,7 +10,6 @@
 #define GAP_TIME_TO_DATE_NORMAL  40
 #define GAP_TIME_TO_DATE_OBS     43
 
-
 #define ICON_W 40
 #define ICON_H 40
 
@@ -30,6 +29,9 @@ struct Ui {
   BitmapLayer *icon_layer;
   BitmapLayer *uv_icon_layer;
   GBitmap     *uv_icon_bitmap;
+
+  TextLayer   *uv_value_layer;
+  char         uv_buf[8];
 
   TextLayer   *precip_layer;
 
@@ -91,17 +93,26 @@ static void prv_layout_top_row(Ui *ui, int32_t last_uv, int32_t last_precip, boo
 
   if (show_uv) {
     x += GAP;
+
     if (!ui->uv_icon_bitmap) {
       ui->uv_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_SKY_DAY);
       bitmap_layer_set_bitmap(ui->uv_icon_layer, ui->uv_icon_bitmap);
       bitmap_layer_set_background_color(ui->uv_icon_layer, GColorClear);
       bitmap_layer_set_compositing_mode(ui->uv_icon_layer, GCompOpSet);
     }
+
     layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), false);
     layer_set_frame(bitmap_layer_get_layer(ui->uv_icon_layer), GRect(x, y, ICON_W, ICON_H));
+
+    snprintf(ui->uv_buf, sizeof(ui->uv_buf), "%ld", (long)last_uv);
+    text_layer_set_text(ui->uv_value_layer, ui->uv_buf);
+    layer_set_frame(text_layer_get_layer(ui->uv_value_layer), GRect(x, y + 4, ICON_W, ICON_H - 5));
+    layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), false);
+
     x += ICON_W;
   } else {
     layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), true);
+    layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), true);
   }
 
   if (show_precip) {
@@ -189,6 +200,16 @@ Ui* ui_create(Window *window) {
   layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), true);
   layer_add_child(root, bitmap_layer_get_layer(ui->uv_icon_layer));
 
+  ui->uv_value_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
+  text_layer_set_background_color(ui->uv_value_layer, GColorClear);
+  text_layer_set_text_color(ui->uv_value_layer, GColorBlack);
+  text_layer_set_font(ui->uv_value_layer,
+                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(ui->uv_value_layer, GTextAlignmentCenter);
+  text_layer_set_text(ui->uv_value_layer, "");
+  layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), true);
+  layer_add_child(root, text_layer_get_layer(ui->uv_value_layer));
+
   ui->precip_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
   text_layer_set_background_color(ui->precip_layer, GColorClear);
   text_layer_set_text_color(ui->precip_layer, GColorWhite);
@@ -260,6 +281,7 @@ void ui_destroy(Ui *ui) {
     ui->uv_icon_bitmap = NULL;
   }
 
+  text_layer_destroy(ui->uv_value_layer);
   bitmap_layer_destroy(ui->uv_icon_layer);
   text_layer_destroy(ui->precip_layer);
   bitmap_layer_destroy(ui->icon_layer);

@@ -7,7 +7,7 @@ function sendDataToPebble(icon_code, uv, prec, forecast) {
     WEATHER_ICON: icon,
     WEATHER_UV: uv,
     WEATHER_PRECIPITATION: prec,
-    WEATHER_FORECAST: forecast
+    WEATHER_FORECAST: forecast,
   });
 }
 
@@ -47,7 +47,6 @@ function fetchWeather(lat, lon) {
           var data = JSON.parse(xhr.responseText);
           var data_object = data.properties.timeseries[0].data;
 
-          var t = data_object.instant.details.air_temperature;
           var uv = data_object.instant.details.ultraviolet_index_clear_sky;
           var icon = data_object.next_1_hours.summary.symbol_code;
           var prec = data_object.next_6_hours.details.precipitation_amount_max;
@@ -67,15 +66,22 @@ function fetchWeather(lat, lon) {
 
             var temp_i = Math.round(data_i.instant.details.air_temperature);
 
-            var precip_i = 0;
+            var min_precip_i = 0;
+            var max_precip_i = 0;
 
             if (data_i.next_1_hours) {
-              precip_i = Math.round(
-                data_i.next_1_hours.details.precipitation_amount_max
+              min_precip_i = Math.round(
+                data_i.next_1_hours.details.precipitation_amount_min || 0
+              );
+
+              max_precip_i = Math.round(
+                data_i.next_1_hours.details.precipitation_amount_max || 0
               );
             }
 
-            forecastParts.push(temp_i + "," + precip_i);
+            forecastParts.push(
+              temp_i + "," + min_precip_i + "," + max_precip_i
+            );
           }
 
           var forecastString = forecastParts.join("|");
@@ -90,10 +96,10 @@ function fetchWeather(lat, lon) {
         var icon = "rain";
         var uv_round = 2;
         var precipitation = 4;
-        var forecastString = "18,0|19,0|19,0|18,0|18,0|18,0|17,1|17,5|16,2|15,1|15,0|15,0|15,0";
+        var forecastString =
+          "18,0,0|19,0,0|19,0,0|18,0,0|18,0,0|18,0,0|17,0,1|17,2,5|16,3,5|15,0,1|15,0,0|15,0,0|15,0,0";
 
         sendDataToPebble(icon, uv_round, precipitation, forecastString);
-
       }
     }
   };
