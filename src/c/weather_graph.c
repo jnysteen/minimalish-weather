@@ -2,7 +2,7 @@
 #include "weather_graph.h"
 
 #ifndef WEATHER_GRAPH_POINTS
-#define WEATHER_GRAPH_POINTS 13
+#define WEATHER_GRAPH_POINTS 12
 #endif
 
 #ifndef PERSIST_KEY_WEATHER_GRAPH_TEMPS

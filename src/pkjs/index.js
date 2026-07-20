@@ -61,7 +61,7 @@ function fetchWeather(lat, lon) {
 
           var forecastParts = [];
 
-          for (var i = 0; i <= 12; i++) {
+          for (var i = 0; i < 12; i++) {
             var data_i = data.properties.timeseries[i].data;
 
             var temp_i = Math.round(data_i.instant.details.air_temperature);
