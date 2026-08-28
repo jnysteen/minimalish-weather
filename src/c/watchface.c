@@ -11,8 +11,6 @@ static Window *s_window;
 static Ui     *s_ui;
 
 static bool    s_is_obstructed = false;
-static int32_t s_last_uv       = -1;
-static int32_t s_last_precip   = -1;
 static bool    s_bt_connected  = true;
 static int     s_batt_percent  = 100;
 
@@ -53,16 +51,14 @@ static void prv_relayout(void) {
 
   s_is_obstructed = (unob.size.h < full.size.h);
 
-  ui_relayout(s_ui, s_is_obstructed, s_last_uv, s_last_precip);
+  ui_relayout(s_ui, s_is_obstructed);
 }
 
 static void on_weather_update(int32_t uv, int32_t precip) {
-  s_last_uv = uv;
-  s_last_precip = precip;
+  (void)uv;
+  (void)precip;
 
-  ui_set_precip(s_ui, precip);
   weather_graph_mark_dirty();
-  prv_relayout();
 }
 
 static void on_theme_changed(void) {
@@ -121,10 +117,7 @@ static void window_load(Window *window) {
 
   weather_graph_init(ui_get_weather_graph_layer(s_ui));
 
-  weather_init(
-    ui_get_main_icon_layer(s_ui),
-    on_weather_update
-  );
+  weather_init(NULL, on_weather_update);
 
   prv_update_time_date();
   prv_relayout();

@@ -2,17 +2,14 @@
 #include "ui.h"
 #include "theme.h"
 
-#define TOP_MARGIN_NORMAL        12
-#define TOP_MARGIN_OBSTRUCTED     5
-#define GAP_DATE_TO_GRAPH        30
+#define TOP_MARGIN_NORMAL         8
+#define TOP_MARGIN_OBSTRUCTED     4
+#define GAP_DATE_TO_GRAPH        26
 
-#define TIME_NUDGE 5
+#define TIME_H 60
 
-#define GAP_TIME_TO_DATE_NORMAL  40
-#define GAP_TIME_TO_DATE_OBS     43
-
-#define ICON_W 40
-#define ICON_H 40
+#define GAP_TIME_TO_DATE_NORMAL   6
+#define GAP_TIME_TO_DATE_OBS      4
 
 #define GRAPH_X_PAD 6
 #define GRAPH_BOTTOM_PAD 6
@@ -27,22 +24,11 @@ struct Ui {
   TextLayer   *time_layer;
   TextLayer   *date_layer;
 
-  BitmapLayer *icon_layer;
-  BitmapLayer *uv_icon_layer;
-  GBitmap     *uv_icon_bitmap;
-
-  TextLayer   *uv_value_layer;
-  char         uv_buf[8];
-
-  TextLayer   *precip_layer;
-
   BitmapLayer *bt_icon_layer;
   GBitmap     *bt_icon_bitmap;
 
   BitmapLayer *batt_icon_layer;
   GBitmap     *batt_icon_bitmap;
-
-  char precip_buf[16];
 };
 
 static void frame_update_proc(Layer *layer, GContext *ctx) {
@@ -71,78 +57,20 @@ static inline GRect prv_unob_bounds(Ui *ui) {
   return layer_get_unobstructed_bounds(prv_root(ui));
 }
 
-static void prv_layout_top_row(Ui *ui, int32_t last_uv, int32_t last_precip, bool is_obstructed) {
-  Layer *root = prv_root(ui);
-  GRect unob = prv_unob_bounds(ui);
-
-  const int GAP = 6;
-
-  bool show_uv = (last_uv > 3);
-  bool show_precip = (last_precip > 1);
-
-  const int precip_w = show_precip ? ICON_W : 0;
-
-  int total_w = ICON_W;
-  if (show_uv) total_w += GAP + ICON_W;
-  if (show_precip) total_w += GAP + precip_w;
-
-  int x = (unob.size.w - total_w) / 2;
-  int y = unob.origin.y + (is_obstructed ? TOP_MARGIN_OBSTRUCTED : TOP_MARGIN_NORMAL);
-
-  layer_set_frame(bitmap_layer_get_layer(ui->icon_layer), GRect(x, y, ICON_W, ICON_H));
-  x += ICON_W;
-
-  if (show_uv) {
-    x += GAP;
-
-    if (!ui->uv_icon_bitmap) {
-      ui->uv_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_SKY_DAY);
-      theme_tint_bitmap(ui->uv_icon_bitmap);
-      bitmap_layer_set_bitmap(ui->uv_icon_layer, ui->uv_icon_bitmap);
-      bitmap_layer_set_background_color(ui->uv_icon_layer, GColorClear);
-      bitmap_layer_set_compositing_mode(ui->uv_icon_layer, GCompOpSet);
-    }
-
-    layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), false);
-    layer_set_frame(bitmap_layer_get_layer(ui->uv_icon_layer), GRect(x, y, ICON_W, ICON_H));
-
-    snprintf(ui->uv_buf, sizeof(ui->uv_buf), "%ld", (long)last_uv);
-    text_layer_set_text(ui->uv_value_layer, ui->uv_buf);
-    layer_set_frame(text_layer_get_layer(ui->uv_value_layer), GRect(x, y + 4, ICON_W, ICON_H - 5));
-    layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), false);
-
-    x += ICON_W;
-  } else {
-    layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), true);
-    layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), true);
-  }
-
-  if (show_precip) {
-    x += GAP;
-    layer_set_hidden(text_layer_get_layer(ui->precip_layer), false);
-    layer_set_frame(text_layer_get_layer(ui->precip_layer), GRect(x, y, precip_w, ICON_H));
-  } else {
-    layer_set_hidden(text_layer_get_layer(ui->precip_layer), true);
-  }
-
-  layer_mark_dirty(root);
-}
-
-static void prv_relayout_all(Ui *ui, bool is_obstructed, int32_t last_uv, int32_t last_precip) {
+static void prv_relayout_all(Ui *ui, bool is_obstructed) {
   GRect unob = prv_unob_bounds(ui);
   GRect full = prv_bounds(ui);
 
   layer_set_frame(ui->frame_layer, unob);
 
   const int margin_top = is_obstructed ? TOP_MARGIN_OBSTRUCTED : TOP_MARGIN_NORMAL;
-  int y = unob.origin.y + margin_top;
 
-  const int time_y = y + ICON_H - TIME_NUDGE;
+  const int time_y = unob.origin.y + margin_top;
   layer_set_frame(text_layer_get_layer(ui->time_layer),
-                  GRect(unob.origin.x, time_y, unob.size.w, 46));
+                  GRect(unob.origin.x, time_y, unob.size.w, TIME_H));
 
   const int gap_time_to_date = is_obstructed ? GAP_TIME_TO_DATE_OBS : GAP_TIME_TO_DATE_NORMAL;
-  const int date_y = time_y + gap_time_to_date;
+  const int date_y = time_y + TIME_H + gap_time_to_date;
   layer_set_frame(text_layer_get_layer(ui->date_layer),
                   GRect(unob.origin.x, date_y, unob.size.w, 28));
 
@@ -160,8 +88,6 @@ static void prv_relayout_all(Ui *ui, bool is_obstructed, int32_t last_uv, int32_
                           unob.size.w - (GRAPH_X_PAD * 2),
                           graph_h));
   }
-
-  prv_layout_top_row(ui, last_uv, last_precip, is_obstructed);
 
   const int x_pad = 8;
   const int y_pad = 5;
@@ -189,37 +115,9 @@ Ui* ui_create(Window *window) {
   layer_set_update_proc(ui->frame_layer, frame_update_proc);
   layer_add_child(root, ui->frame_layer);
 
-  ui->icon_layer = bitmap_layer_create(GRect(0, 0, ICON_W, ICON_H));
-  bitmap_layer_set_background_color(ui->icon_layer, GColorClear);
-  bitmap_layer_set_compositing_mode(ui->icon_layer, GCompOpSet);
-  layer_add_child(root, bitmap_layer_get_layer(ui->icon_layer));
-
-  ui->uv_icon_layer = bitmap_layer_create(GRect(0, 0, ICON_W, ICON_H));
-  bitmap_layer_set_background_color(ui->uv_icon_layer, GColorClear);
-  bitmap_layer_set_compositing_mode(ui->uv_icon_layer, GCompOpSet);
-  layer_set_hidden(bitmap_layer_get_layer(ui->uv_icon_layer), true);
-  layer_add_child(root, bitmap_layer_get_layer(ui->uv_icon_layer));
-
-  ui->uv_value_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
-  text_layer_set_background_color(ui->uv_value_layer, GColorClear);
-  text_layer_set_font(ui->uv_value_layer,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text_alignment(ui->uv_value_layer, GTextAlignmentCenter);
-  text_layer_set_text(ui->uv_value_layer, "");
-  layer_set_hidden(text_layer_get_layer(ui->uv_value_layer), true);
-  layer_add_child(root, text_layer_get_layer(ui->uv_value_layer));
-
-  ui->precip_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
-  text_layer_set_background_color(ui->precip_layer, GColorClear);
-  text_layer_set_font(ui->precip_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-  text_layer_set_text_alignment(ui->precip_layer, GTextAlignmentCenter);
-  text_layer_set_text(ui->precip_layer, "");
-  layer_set_hidden(text_layer_get_layer(ui->precip_layer), true);
-  layer_add_child(root, text_layer_get_layer(ui->precip_layer));
-
-  ui->time_layer = text_layer_create(GRect(0, 0, bounds.size.w, 46));
+  ui->time_layer = text_layer_create(GRect(0, 0, bounds.size.w, TIME_H));
   text_layer_set_background_color(ui->time_layer, GColorClear);
-  text_layer_set_font(ui->time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
+  text_layer_set_font(ui->time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(ui->time_layer, GTextAlignmentCenter);
   layer_add_child(root, text_layer_get_layer(ui->time_layer));
 
@@ -260,14 +158,9 @@ void ui_apply_theme(Ui *ui) {
 
   window_set_background_color(ui->window, theme_bg());
 
-  // The UV number is knocked out of the badge behind it, so it takes the
-  // background color while everything else takes the foreground.
-  text_layer_set_text_color(ui->uv_value_layer, theme_bg());
-  text_layer_set_text_color(ui->precip_layer, theme_fg());
   text_layer_set_text_color(ui->time_layer, theme_fg());
   text_layer_set_text_color(ui->date_layer, theme_fg());
 
-  theme_tint_bitmap(ui->uv_icon_bitmap);
   theme_tint_bitmap(ui->bt_icon_bitmap);
   theme_tint_bitmap(ui->batt_icon_bitmap);
 
@@ -293,16 +186,6 @@ void ui_destroy(Ui *ui) {
   bitmap_layer_destroy(ui->bt_icon_layer);
   bitmap_layer_destroy(ui->batt_icon_layer);
 
-  if (ui->uv_icon_bitmap) {
-    gbitmap_destroy(ui->uv_icon_bitmap);
-    ui->uv_icon_bitmap = NULL;
-  }
-
-  text_layer_destroy(ui->uv_value_layer);
-  bitmap_layer_destroy(ui->uv_icon_layer);
-  text_layer_destroy(ui->precip_layer);
-  bitmap_layer_destroy(ui->icon_layer);
-
   free(ui);
 }
 
@@ -314,11 +197,6 @@ void ui_set_date(Ui *ui, const char *date_text) {
   text_layer_set_text(ui->date_layer, date_text ? date_text : "");
 }
 
-void ui_set_precip(Ui *ui, int32_t mm) {
-  snprintf(ui->precip_buf, sizeof(ui->precip_buf), "%ld\nmm", (long)mm);
-  text_layer_set_text(ui->precip_layer, ui->precip_buf);
-}
-
 void ui_show_bt_icon(Ui *ui, bool show) {
   layer_set_hidden(bitmap_layer_get_layer(ui->bt_icon_layer), !show);
 }
@@ -327,12 +205,8 @@ void ui_show_batt_low_icon(Ui *ui, bool show) {
   layer_set_hidden(bitmap_layer_get_layer(ui->batt_icon_layer), !show);
 }
 
-void ui_relayout(Ui *ui, bool is_obstructed, int32_t last_uv, int32_t last_precip) {
-  prv_relayout_all(ui, is_obstructed, last_uv, last_precip);
-}
-
-BitmapLayer* ui_get_main_icon_layer(Ui *ui) {
-  return ui->icon_layer;
+void ui_relayout(Ui *ui, bool is_obstructed) {
+  prv_relayout_all(ui, is_obstructed);
 }
 
 Layer* ui_get_weather_graph_layer(Ui *ui) {
