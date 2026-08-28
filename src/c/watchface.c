@@ -5,6 +5,7 @@
 #include "messaging.h"
 #include "weather.h"
 #include "weather_graph.h"
+#include "theme.h"
 
 static Window *s_window;
 static Ui     *s_ui;
@@ -62,6 +63,12 @@ static void on_weather_update(int32_t uv, int32_t precip) {
   ui_set_precip(s_ui, precip);
   weather_graph_mark_dirty();
   prv_relayout();
+}
+
+static void on_theme_changed(void) {
+  ui_apply_theme(s_ui);
+  weather_apply_theme();
+  weather_graph_mark_dirty();
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -134,6 +141,9 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
+  // Before the window exists, so the first paint is already in the right theme.
+  theme_load();
+
   s_window = window_create();
 
   window_set_window_handlers(s_window, (WindowHandlers){
@@ -156,7 +166,7 @@ static void init(void) {
   battery_state_service_subscribe(battery_handler);
   battery_handler(battery_state_service_peek());
 
-  messaging_open();
+  messaging_open(on_theme_changed);
   messaging_request_weather_refresh();
 }
 

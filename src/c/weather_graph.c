@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "weather_graph.h"
+#include "theme.h"
 
 #ifndef WEATHER_GRAPH_POINTS
 #define WEATHER_GRAPH_POINTS 12
@@ -92,20 +93,20 @@ static void prv_load(void) {
 }
 
 static void prv_draw_outlined_text(GContext *ctx, const char *text, GFont font, GRect rect, GTextAlignment alignment) {
-  graphics_context_set_text_color(ctx, GColorBlack);
+  graphics_context_set_text_color(ctx, theme_bg());
   graphics_draw_text(ctx, text, font, GRect(rect.origin.x - 1, rect.origin.y, rect.size.w, rect.size.h), GTextOverflowModeTrailingEllipsis, alignment, NULL);
   graphics_draw_text(ctx, text, font, GRect(rect.origin.x + 1, rect.origin.y, rect.size.w, rect.size.h), GTextOverflowModeTrailingEllipsis, alignment, NULL);
   graphics_draw_text(ctx, text, font, GRect(rect.origin.x, rect.origin.y - 1, rect.size.w, rect.size.h), GTextOverflowModeTrailingEllipsis, alignment, NULL);
   graphics_draw_text(ctx, text, font, GRect(rect.origin.x, rect.origin.y + 1, rect.size.w, rect.size.h), GTextOverflowModeTrailingEllipsis, alignment, NULL);
 
-  graphics_context_set_text_color(ctx, GColorWhite);
+  graphics_context_set_text_color(ctx, theme_fg());
   graphics_draw_text(ctx, text, font, rect, GTextOverflowModeTrailingEllipsis, alignment, NULL);
 }
 
 static void prv_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
-  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_context_set_fill_color(ctx, theme_bg());
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 
   if (!s_available || s_count < 2) {
@@ -144,8 +145,8 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 
   int gx = graph_x + ((graph_w - col_w * s_count) / 2);
 
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, theme_fg());
+  graphics_context_set_fill_color(ctx, theme_fg());
   graphics_context_set_stroke_width(ctx, 1);
 
   for (int i = 0; i < s_count; i++) {
@@ -163,7 +164,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
     if (bar_w < 1) bar_w = 1;
 
     if (max_h > 0) {
-      graphics_context_set_stroke_color(ctx, GColorWhite);
+      graphics_context_set_stroke_color(ctx, theme_fg());
       graphics_draw_rect(
         ctx,
         GRect(bar_x, graph_y + graph_h - max_h, bar_w, max_h)
@@ -174,7 +175,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
       int fill_w = bar_w > 2 ? bar_w - 2 : bar_w;
       int fill_x = bar_w > 2 ? bar_x + 1 : bar_x;
 
-      graphics_context_set_fill_color(ctx, GColorLightGray);
+      graphics_context_set_fill_color(ctx, theme_fg_dim());
       graphics_fill_rect(
         ctx,
         GRect(fill_x, graph_y + graph_h - min_h, fill_w, min_h),
@@ -184,8 +185,8 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
     }
   }
 
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, theme_fg());
+  graphics_context_set_fill_color(ctx, theme_fg());
   graphics_context_set_stroke_width(ctx, 2);
 
   for (int i = 0; i < s_count - 1; i++) {
@@ -201,7 +202,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
     graphics_draw_line(ctx, GPoint(x1, y1), GPoint(x2, y2));
   }
 
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_context_set_fill_color(ctx, theme_fg());
 
   for (int i = 0; i < s_count; i++) {
     int x = gx + (i * col_w) + (col_w / 2);

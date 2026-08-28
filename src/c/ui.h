@@ -7,6 +7,10 @@ typedef struct Ui Ui;
 Ui* ui_create(Window *window);
 void ui_destroy(Ui *ui);
 
+// Re-reads the current theme and repaints. Called at startup and whenever the
+// setting changes.
+void ui_apply_theme(Ui *ui);
+
 void ui_set_time(Ui *ui, const char *hhmm);
 void ui_set_date(Ui *ui, const char *date_text);
 void ui_set_precip(Ui *ui, int32_t mm);

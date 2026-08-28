@@ -5,6 +5,9 @@
 typedef void (*WeatherUpdateCallback)(int32_t uv, int32_t precip);
 
 void weather_init(BitmapLayer *icon_layer, WeatherUpdateCallback on_update_cb);
+// Recolors the current weather icon after a theme change.
+void weather_apply_theme(void);
+
 void weather_deinit(void);
 void weather_inbox_parse(DictionaryIterator *iter);
 void set_weather_icon(int32_t idx);

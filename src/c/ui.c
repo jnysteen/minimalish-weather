@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "ui.h"
+#include "theme.h"
 
 #define TOP_MARGIN_NORMAL        12
 #define TOP_MARGIN_OBSTRUCTED     5
@@ -51,7 +52,7 @@ static void frame_update_proc(Layer *layer, GContext *ctx) {
   GRect r2 = grect_inset(bounds, GEdgeInsets(2));
   GRect r3 = grect_inset(bounds, GEdgeInsets(3));
 
-  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, theme_fg());
 
   graphics_draw_round_rect(ctx, r1, 2);
   graphics_draw_round_rect(ctx, r2, 2);
@@ -96,6 +97,7 @@ static void prv_layout_top_row(Ui *ui, int32_t last_uv, int32_t last_precip, boo
 
     if (!ui->uv_icon_bitmap) {
       ui->uv_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLEAR_SKY_DAY);
+      theme_tint_bitmap(ui->uv_icon_bitmap);
       bitmap_layer_set_bitmap(ui->uv_icon_layer, ui->uv_icon_bitmap);
       bitmap_layer_set_background_color(ui->uv_icon_layer, GColorClear);
       bitmap_layer_set_compositing_mode(ui->uv_icon_layer, GCompOpSet);
@@ -183,8 +185,6 @@ Ui* ui_create(Window *window) {
   Layer *root = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(root);
 
-  window_set_background_color(window, GColorBlack);
-
   ui->frame_layer = layer_create(bounds);
   layer_set_update_proc(ui->frame_layer, frame_update_proc);
   layer_add_child(root, ui->frame_layer);
@@ -202,7 +202,6 @@ Ui* ui_create(Window *window) {
 
   ui->uv_value_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
   text_layer_set_background_color(ui->uv_value_layer, GColorClear);
-  text_layer_set_text_color(ui->uv_value_layer, GColorBlack);
   text_layer_set_font(ui->uv_value_layer,
                       fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(ui->uv_value_layer, GTextAlignmentCenter);
@@ -212,7 +211,6 @@ Ui* ui_create(Window *window) {
 
   ui->precip_layer = text_layer_create(GRect(0, 0, ICON_W, ICON_H));
   text_layer_set_background_color(ui->precip_layer, GColorClear);
-  text_layer_set_text_color(ui->precip_layer, GColorWhite);
   text_layer_set_font(ui->precip_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(ui->precip_layer, GTextAlignmentCenter);
   text_layer_set_text(ui->precip_layer, "");
@@ -221,14 +219,12 @@ Ui* ui_create(Window *window) {
 
   ui->time_layer = text_layer_create(GRect(0, 0, bounds.size.w, 46));
   text_layer_set_background_color(ui->time_layer, GColorClear);
-  text_layer_set_text_color(ui->time_layer, GColorWhite);
   text_layer_set_font(ui->time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
   text_layer_set_text_alignment(ui->time_layer, GTextAlignmentCenter);
   layer_add_child(root, text_layer_get_layer(ui->time_layer));
 
   ui->date_layer = text_layer_create(GRect(0, 0, bounds.size.w, 28));
   text_layer_set_background_color(ui->date_layer, GColorClear);
-  text_layer_set_text_color(ui->date_layer, GColorWhite);
   text_layer_set_font(ui->date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(ui->date_layer, GTextAlignmentCenter);
   text_layer_set_text(ui->date_layer, "");
@@ -254,7 +250,28 @@ Ui* ui_create(Window *window) {
   layer_set_hidden(bitmap_layer_get_layer(ui->batt_icon_layer), true);
   layer_add_child(root, bitmap_layer_get_layer(ui->batt_icon_layer));
 
+  ui_apply_theme(ui);
+
   return ui;
+}
+
+void ui_apply_theme(Ui *ui) {
+  if (!ui) return;
+
+  window_set_background_color(ui->window, theme_bg());
+
+  // The UV number is knocked out of the badge behind it, so it takes the
+  // background color while everything else takes the foreground.
+  text_layer_set_text_color(ui->uv_value_layer, theme_bg());
+  text_layer_set_text_color(ui->precip_layer, theme_fg());
+  text_layer_set_text_color(ui->time_layer, theme_fg());
+  text_layer_set_text_color(ui->date_layer, theme_fg());
+
+  theme_tint_bitmap(ui->uv_icon_bitmap);
+  theme_tint_bitmap(ui->bt_icon_bitmap);
+  theme_tint_bitmap(ui->batt_icon_bitmap);
+
+  layer_mark_dirty(window_get_root_layer(ui->window));
 }
 
 void ui_destroy(Ui *ui) {
