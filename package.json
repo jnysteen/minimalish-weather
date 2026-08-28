@@ -30,7 +30,8 @@
       "THEME_DARK"
     ],
     "capabilities": [
-      "location"
+      "location",
+      "configurable"
     ],
     "resources": {
       "media": [
