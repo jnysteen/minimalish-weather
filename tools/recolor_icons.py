@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Recolor the watchface icons to a single flat color, keeping their alpha.
 
-Every icon in resources/images is a flat THEME_FG silhouette with an alpha
-channel, composited onto the background with GCompOpSet. Flipping the face
-between dark and light means recoloring them, or they end up invisible against
-their own background.
+Every icon in resources/images is a flat silhouette with an alpha channel,
+composited onto the background with GCompOpSet, which means a white icon is
+invisible on a white face. The watchface tints them to the current theme as it
+loads them (see theme_tint_bitmap), so this script only sets the color they are
+shipped in -- the one that shows if tinting ever cannot be applied.
 
-    python3 tools/recolor_icons.py 000000     # icons for a light face
-    python3 tools/recolor_icons.py ffffff     # icons for a dark face
+    python3 tools/recolor_icons.py 000000     # what is checked in today
 
 Only the images listed in package.json are touched. Alpha is left alone, so
 antialiased edges keep their softness.

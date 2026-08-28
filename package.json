@@ -6,7 +6,9 @@
     "pebble-app"
   ],
   "private": false,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "Minimal Weather",
     "uuid": "5ccb3039-b36b-464d-bed4-cb12dee9e470",
@@ -24,7 +26,8 @@
       "WEATHER_ICON",
       "WEATHER_UV",
       "WEATHER_PRECIPITATION",
-      "WEATHER_FORECAST"
+      "WEATHER_FORECAST",
+      "THEME_DARK"
     ],
     "capabilities": [
       "location"

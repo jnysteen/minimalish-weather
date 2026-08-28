@@ -1,0 +1,26 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Minimal Weather"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Appearance"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "THEME_DARK",
+        "label": "Dark theme",
+        "description": "Light text and icons on a dark face, instead of dark on light.",
+        "defaultValue": false
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save"
+  }
+]

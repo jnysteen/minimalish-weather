@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "weather.h"
+#include "theme.h"
 
 static BitmapLayer *s_icon_layer  = NULL;
 static GBitmap     *s_icon_bitmap = NULL;
@@ -63,6 +64,7 @@ void set_weather_icon(int32_t idx) {
     s_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EMPTY);
   }
 
+  theme_tint_bitmap(s_icon_bitmap);
   bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
 }
 
@@ -75,7 +77,7 @@ void weather_inbox_parse(DictionaryIterator *iter) {
     set_weather_icon(icon_t->value->int32);
   }
 
-  if (s_on_update) {
+  if (s_on_update && (uv_t || pr_t || icon_t)) {
     int32_t uv = uv_t ? uv_t->value->int32 : 0;
     int32_t pr = pr_t ? pr_t->value->int32 : 0;
     s_on_update(uv, pr);
@@ -87,6 +89,13 @@ void weather_init(BitmapLayer *icon_layer, WeatherUpdateCallback on_update_cb) {
   s_on_update  = on_update_cb;
 
   set_weather_icon(0);
+}
+
+void weather_apply_theme(void) {
+  if (!s_icon_bitmap || !s_icon_layer) return;
+
+  theme_tint_bitmap(s_icon_bitmap);
+  layer_mark_dirty(bitmap_layer_get_layer(s_icon_layer));
 }
 
 void weather_deinit(void) {

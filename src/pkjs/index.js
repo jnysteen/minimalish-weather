@@ -1,3 +1,7 @@
+var Clay = require("pebble-clay");
+var clayConfig = require("./config.json");
+var clay = new Clay(clayConfig);
+
 var getImageId = require("./symbolMap");
 
 function sendDataToPebble(icon_code, uv, prec, forecast) {
